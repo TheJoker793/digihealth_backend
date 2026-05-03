@@ -1,0 +1,18 @@
+-- 1. Créer le login serveur si nécessaire
+IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'desktop-700sabg\channoufi')
+BEGIN
+    CREATE LOGIN [desktop-700sabg\channoufi] FROM WINDOWS;
+END
+
+-- 2. Mapper / créer l'utilisateur dans la base et donner db_owner
+USE [digihealth_patient];
+
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'desktop-700sabg\channoufi')
+BEGIN
+    CREATE USER [desktop-700sabg\channoufi] FOR LOGIN [desktop-700sabg\channoufi];
+END
+
+ALTER ROLE db_owner ADD MEMBER [desktop-700sabg\channoufi];
+
+-- 3. Optionnel : définir la base par défaut du login
+ALTER LOGIN [desktop-700sabg\channoufi] WITH DEFAULT_DATABASE = [digihealth_patient];

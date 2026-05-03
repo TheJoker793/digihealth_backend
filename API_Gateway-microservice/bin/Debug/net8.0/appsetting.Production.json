@@ -1,0 +1,15 @@
+{
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Warning",
+      "Override": {
+        "Microsoft": "Error",
+        "Ocelot": "Warning"
+      }
+    }
+  },
+  "Hosts": {
+    "Auth": "auth-microservice",
+    "Patient": "patient-microservice"
+  }
+}

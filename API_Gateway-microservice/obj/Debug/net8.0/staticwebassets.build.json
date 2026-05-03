@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "axBq2oeBUWs7TyqE8i9zpdGIHQXV3hubSx+e0Q8rvJo=",
+  "Source": "API_Gateway-microservice",
+  "BasePath": "_content/API_Gateway-microservice",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
