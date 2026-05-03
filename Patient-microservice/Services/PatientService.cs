@@ -20,7 +20,7 @@ namespace Patient_microservice.Services
             return patient;
         }
         public async Task<Patient?> GetById(Guid id) => await _unitOfWork.Patients.GetByIdAsync(id);
-        public async Task<IEnumerable<Patient>> Search(string nom, string prenom) => await _unitOfWork.Patients.GetAllAsync();
+        public async Task<IEnumerable<Patient>> getAllAsync() => await _unitOfWork.Patients.GetAllAsync();
         public async Task Update(Patient patient)
         {
             _unitOfWork.Patients.Update(patient);

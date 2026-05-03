@@ -15,7 +15,7 @@
     },
     "RateLimitOptions": {
       "DisableRateLimitHeaders": false,
-      "QuotaExceededMessage": "Trop de requêtes. Réessayez dans un moment.",
+      "QuotaExceededMessage": "Trop de requï¿½tes. Rï¿½essayez dans un moment.",
       "HttpStatusCode": 429,
       "ClientIdHeader": "X-Client-Id"
     }

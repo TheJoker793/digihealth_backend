@@ -83,3 +83,4 @@ C:\Users\Channoufi\source\repos\DigiHealth-Backend\API_Gateway-microservice\obj\
 C:\Users\Channoufi\source\repos\DigiHealth-Backend\API_Gateway-microservice\obj\Debug\net8.0\API_Gateway-microservice.pdb
 C:\Users\Channoufi\source\repos\DigiHealth-Backend\API_Gateway-microservice\obj\Debug\net8.0\API_Gateway-microservice.genruntimeconfig.cache
 C:\Users\Channoufi\source\repos\DigiHealth-Backend\API_Gateway-microservice\obj\Debug\net8.0\ref\API_Gateway-microservice.dll
+C:\Users\Channoufi\source\repos\DigiHealth-Backend\API_Gateway-microservice\obj\Debug\net8.0\API_Gateway-microservice.sourcelink.json

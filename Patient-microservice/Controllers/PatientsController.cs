@@ -29,10 +29,10 @@ namespace Patient_microservice.Controllers
             return patient == null ? NotFound() : Ok(patient);
         }
 
-        [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] string nom, [FromQuery] string prenom)
+        [HttpGet]
+        public async Task<IActionResult> GetAllAsync()
         {
-            var patients = await _service.Search(nom, prenom);
+            var patients = await _service.getAllAsync();
             return Ok(patients);
         }
 

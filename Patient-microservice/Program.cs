@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Patient_microservice.Domain.Interfaces;
+using Patient_microservice.Extensions;
 using Patient_microservice.Middlewares;
 using Patient_microservice.Persistence;
+using Patient_microservice.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +17,7 @@ builder.Services.AddDbContext<PatientDbContext>(options =>
 
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
+builder.Services.AddApplicationServices();
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();

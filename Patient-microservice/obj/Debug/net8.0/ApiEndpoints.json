@@ -328,6 +328,16 @@
   },
   {
     "ContainingType": "Patient_microservice.Controllers.PatientController",
+    "Method": "GetAllAsync",
+    "RelativePath": "api/v1/Patient",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Patient_microservice.Controllers.PatientController",
     "Method": "GetById",
     "RelativePath": "api/v1/Patient/{id}",
     "HttpMethod": "GET",
@@ -375,27 +385,6 @@
         "Name": "request",
         "Type": "Patient_microservice.Domain.Entities.Patient",
         "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Patient_microservice.Controllers.PatientController",
-    "Method": "Search",
-    "RelativePath": "api/v1/Patient/search",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "nom",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "prenom",
-        "Type": "System.String",
-        "IsRequired": false
       }
     ],
     "ReturnTypes": []

@@ -17,7 +17,7 @@ namespace Patient_microservice.Domain.Entities
         public required string Telephone { get; set; }
         public string? Email { get; set; }
 
-        public MedecinTraitant MedecinTraitant { get; set; }
+        public MedecinTraitant? MedecinTraitant { get; set; }
 
         [JsonIgnore]
 
