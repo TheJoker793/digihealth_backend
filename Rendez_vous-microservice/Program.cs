@@ -1,49 +1,49 @@
-﻿using DMI.RendezVous.Infrastructure.Persistence;
-using Hangfire;
-using Microsoft.EntityFrameworkCore;
-using Rendez_vous_microservice.Domain.Interfaces;
-using Rendez_vous_microservice.Exceptions;
+﻿using Rendez_vous_microservice.Extensions;   // ✅ Importer tes extensions
 using Rendez_vous_microservice.Infrastructure.Hubs;
-using Rendez_vous_microservice.Infrastructure.Persistence;
+using Rendez_vous_microservice.Exceptions;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ✅ Récupération de la chaîne de connexion
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("La chaîne de connexion 'DefaultConnection' est introuvable dans appsettings.json.");
+}
+
+// ✅ Enregistrement des couches via extensions
+builder.Services.AddDomain();
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(connectionString);
+builder.Services.AddHangfire(connectionString);
+builder.Services.AddSignalR();
+
+// ✅ Controllers / API
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-
-
-// ✅ DbContext EF Core + SQL Server
-builder.Services.AddDbContext<RendezVousDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-//builder.Services.AddApplicationServices();
-
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ✅ Pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseExceptionHandling();
-app.UseJwtValidation();
 
+app.UseExceptionHandling();   // middleware custom
+app.UseJwtValidation();       // middleware JWT
 
 app.UseHttpsRedirection();
-
+app.UseRouting();
 app.UseAuthorization();
+
+// ✅ Endpoints
 app.MapControllers();
 app.MapHub<AgendaHub>("/agendaHub");   // SignalR Hub
 app.MapHangfireDashboard();            // Dashboard Hangfire
-
 
 app.Run();

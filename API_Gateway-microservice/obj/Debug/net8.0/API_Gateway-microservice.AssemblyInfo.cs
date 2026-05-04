@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("API_Gateway-microservice")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+92346714194066ea197e5ed2f774b41492137359")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3951aa7cbddc8e860d9337dad76189ba947081f7")]
 [assembly: System.Reflection.AssemblyProductAttribute("API_Gateway-microservice")]
 [assembly: System.Reflection.AssemblyTitleAttribute("API_Gateway-microservice")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

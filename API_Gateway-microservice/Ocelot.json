@@ -1,6 +1,6 @@
 {
   "GlobalConfiguration": {
-    "BaseUrl": "http://localhost:5000",
+    "BaseUrl": "http://localhost:32768",
     "RequestIdKey": "X-Request-Id",
     "HttpHandlerOptions": {
       "AllowAutoRedirect": false,
@@ -15,7 +15,7 @@
     },
     "RateLimitOptions": {
       "DisableRateLimitHeaders": false,
-      "QuotaExceededMessage": "Trop de requ�tes. R�essayez dans un moment.",
+      "QuotaExceededMessage": "Trop de requêtes. Réessayez dans un moment.",
       "HttpStatusCode": 429,
       "ClientIdHeader": "X-Client-Id"
     }
@@ -23,13 +23,14 @@
 
   "Routes": [
 
+    // ── AUTH — routes publiques ──────────────────────────
     {
       "UpstreamPathTemplate": "/gateway/auth/login",
       "UpstreamHttpMethod": [ "POST" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "${AUTH_HOST}",
+          "Host": "host.docker.internal",
           "Port": 5202
         }
       ],
@@ -38,23 +39,16 @@
         "EnableRateLimiting": true,
         "Period": "1m",
         "PeriodTimespan": 60,
-        "Limit": 10,
-        "ClientWhitelist": []
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 5000
+        "Limit": 10
       }
     },
-
     {
       "UpstreamPathTemplate": "/gateway/auth/refresh",
       "UpstreamHttpMethod": [ "POST" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "${AUTH_HOST}",
+          "Host": "host.docker.internal",
           "Port": 5202
         }
       ],
@@ -63,294 +57,184 @@
         "EnableRateLimiting": true,
         "Period": "1m",
         "PeriodTimespan": 60,
-        "Limit": 20,
-        "ClientWhitelist": []
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 5000
+        "Limit": 20
       }
     },
-
-    {
-      "UpstreamPathTemplate": "/gateway/auth/logout",
-      "UpstreamHttpMethod": [ "POST" ],
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "${AUTH_HOST}",
-          "Port": 5202
-        }
-      ],
-      "DownstreamPathTemplate": "/api/v1/auth/logout",
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer"
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 5000
-      }
-    },
-
-    {
-      "UpstreamPathTemplate": "/gateway/auth/userinfo",
-      "UpstreamHttpMethod": [ "GET" ],
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "${AUTH_HOST}",
-          "Port": 5202
-        }
-      ],
-      "DownstreamPathTemplate": "/api/v1/auth/userinfo",
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer"
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 5000
-      }
-    },
-
     {
       "UpstreamPathTemplate": "/gateway/twofactor/verify",
       "UpstreamHttpMethod": [ "POST" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "${AUTH_HOST}",
+          "Host": "host.docker.internal",
           "Port": 5202
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/twofactor/verify",
+      "DownstreamPathTemplate": "/api/v1/auth/2fa/verify",
       "RateLimitOptions": {
         "EnableRateLimiting": true,
         "Period": "1m",
         "PeriodTimespan": 60,
-        "Limit": 5,
-        "ClientWhitelist": []
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 5000
+        "Limit": 5
       }
     },
 
+    // ── AUTH — routes protégées (JWT requis) ─────────────
+    {
+      "UpstreamPathTemplate": "/gateway/auth/logout",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "host.docker.internal",
+          "Port": 5202
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/auth/logout",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/auth/userinfo",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "host.docker.internal",
+          "Port": 5202
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/auth/userinfo",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    // ── USER MANAGEMENT — Admin uniquement ───────────────
     {
       "UpstreamPathTemplate": "/gateway/user/create",
       "UpstreamHttpMethod": [ "POST" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "${AUTH_HOST}",
+          "Host": "host.docker.internal",
           "Port": 5202
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/user/create",
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 5000
-      }
+      "DownstreamPathTemplate": "/api/v1/users",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Admin" }
     },
-
     {
       "UpstreamPathTemplate": "/gateway/user/{id}/disable",
       "UpstreamHttpMethod": [ "PUT" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "${AUTH_HOST}",
+          "Host": "host.docker.internal",
           "Port": 5202
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/user/{id}/disable",
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 5000
-      }
+      "DownstreamPathTemplate": "/api/v1/users/{id}/disable",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Admin" }
     },
-
     {
       "UpstreamPathTemplate": "/gateway/user/{id}/role",
       "UpstreamHttpMethod": [ "PUT" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "${AUTH_HOST}",
+          "Host": "host.docker.internal",
           "Port": 5202
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/user/{id}/role",
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 5000
-      }
+      "DownstreamPathTemplate": "/api/v1/users/{id}/role",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Admin" }
     },
-
     {
       "UpstreamPathTemplate": "/gateway/user/{id}/reset-password",
       "UpstreamHttpMethod": [ "POST" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "${AUTH_HOST}",
+          "Host": "host.docker.internal",
           "Port": 5202
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/user/{id}/reset-password",
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 5000
-      }
+      "DownstreamPathTemplate": "/api/v1/users/{id}/reset-password",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Admin" }
     },
 
+    // ── PATIENT.SVC ──────────────────────────────────────
     {
       "UpstreamPathTemplate": "/gateway/patients",
       "UpstreamHttpMethod": [ "GET" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "${PATIENT_HOST}",
+          "Host": "host.docker.internal",
           "Port": 5100
         }
       ],
       "DownstreamPathTemplate": "/api/v1/patients",
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Doctor,Admin"
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 10000
-      }
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
     },
-
     {
       "UpstreamPathTemplate": "/gateway/patients/{id}",
       "UpstreamHttpMethod": [ "GET" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "${PATIENT_HOST}",
+          "Host": "host.docker.internal",
           "Port": 5100
         }
       ],
       "DownstreamPathTemplate": "/api/v1/patients/{id}",
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer"
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 10000
-      }
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Infirmier,Admin" }
     },
-
     {
       "UpstreamPathTemplate": "/gateway/patients",
       "UpstreamHttpMethod": [ "POST" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "${PATIENT_HOST}",
+          "Host": "host.docker.internal",
           "Port": 5100
         }
       ],
       "DownstreamPathTemplate": "/api/v1/patients",
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 10000
-      }
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
     },
-
     {
       "UpstreamPathTemplate": "/gateway/patients/{id}",
       "UpstreamHttpMethod": [ "PUT" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "${PATIENT_HOST}",
+          "Host": "host.docker.internal",
           "Port": 5100
         }
       ],
       "DownstreamPathTemplate": "/api/v1/patients/{id}",
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Doctor,Admin"
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 10000
-      }
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
     },
-
     {
       "UpstreamPathTemplate": "/gateway/patients/{id}",
       "UpstreamHttpMethod": [ "DELETE" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "${PATIENT_HOST}",
+          "Host": "host.docker.internal",
           "Port": 5100
         }
       ],
       "DownstreamPathTemplate": "/api/v1/patients/{id}",
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
-      },
-      "QoSOptions": {
-        "ExceptionsAllowedBeforeBreaking": 3,
-        "DurationOfBreak": 15000,
-        "TimeoutValue": 10000
-      }
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Admin" }
     }
   ]
 }

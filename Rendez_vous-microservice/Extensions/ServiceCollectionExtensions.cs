@@ -56,10 +56,11 @@ namespace Rendez_vous_microservice.Extensions
         }
 
 
-        public static IServiceCollection AddSignalR(this IServiceCollection services)
+        public static IServiceCollection AddCustomSignalR(this IServiceCollection services)
         {
             services.AddSignalR();
             return services;
         }
+
     }
 }
