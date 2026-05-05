@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\build\Patient-microservice.props" />
-</Project>
