@@ -33,9 +33,9 @@ namespace Rendez_vous_microservice.Extensions
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // Repositories (si tu veux les injecter directement)
-            services.AddScoped<IRendezVousRepository, RendezVousRepository>();
-            services.AddScoped<ICreneauRepository, CreneauRepository>();
-            services.AddScoped<IRegleRecurrenceRepository, RegleRecurrenceRepository>();
+            services.AddScoped<RendezVousService>();
+            services.AddScoped<CreneauService>();
+            services.AddScoped<RappelService>();
 
             // Services techniques
             services.AddScoped<IEventPublisher, RabbitMqEventPublisher>();

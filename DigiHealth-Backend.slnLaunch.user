@@ -3,15 +3,7 @@
     "Name": "Nouveau profil",
     "Projects": [
       {
-        "Path": "Auth-microservice\\Auth-microservice.csproj",
-        "Action": "Start"
-      },
-      {
-        "Path": "Patient-microservice\\Patient-microservice.csproj",
-        "Action": "Start"
-      },
-      {
-        "Path": "API_Gateway-microservice\\API_Gateway-microservice.csproj",
+        "Path": "Rendez_vous-microservice\\Rendez_vous-microservice.csproj",
         "Action": "Start"
       }
     ]

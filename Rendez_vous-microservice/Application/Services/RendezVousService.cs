@@ -59,5 +59,25 @@ namespace Rendez_vous_microservice.Application.Services
             return await _unitOfWork.RendezVous.GetAgendaAsync(medecinId, debut, fin);
         }
 
+        public async Task<RendezVous?> GetById(Guid id)
+        {
+            return await _unitOfWork.RendezVous.GetByIdAsync(id);
+        }
+
+        public async Task<IEnumerable<RendezVous>> GetByPatient(Guid patientId)
+        {
+            return await _unitOfWork.RendezVous.GetByPatientAsync(patientId);
+        }
+
+        public async Task Terminer(Guid rendezVousId)
+        {
+            var rdv = await _unitOfWork.RendezVous.GetByIdAsync(rendezVousId)
+                      ?? throw new Exception("Rendez-vous introuvable");
+            rdv.TerminerConsultation(); // méthode métier déjà dans ton entité
+            _unitOfWork.RendezVous.Update(rdv);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+
     }
 }
