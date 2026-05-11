@@ -27,8 +27,7 @@ namespace Rendez_vous_microservice.Controllers
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var rdv = await _service.PrendreRdv(new RendezVous()); // ⚠️ ton service n’a pas encore GetById
-            // Idéalement, ajoute GetById dans RendezVousService
+            var rdv = await _service.GetById (id);
             return rdv is null ? NotFound() : Ok(rdv);
         }
 

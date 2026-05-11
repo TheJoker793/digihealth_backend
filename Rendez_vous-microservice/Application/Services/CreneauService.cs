@@ -32,6 +32,18 @@ namespace Rendez_vous_microservice.Application.Services
             _unitOfWork.Creneaux.Update(creneau);
             await _unitOfWork.SaveChangesAsync();
         }
+
+        public async Task Supprimer(Guid id) 
+        {
+            var existCreneau = await _unitOfWork.Creneaux.GetByIdAsync(id);
+            if (existCreneau==null)
+            {
+                return;
+                
+            }
+            _unitOfWork.Creneaux.Remove(existCreneau);
+            await _unitOfWork.SaveChangesAsync();
+        }
         public async Task<IEnumerable<Creneau>> GenererRecurrence(RegleRecurrence regle, Guid cabinetId, TypeCreneau type)
         {
             var creneaux = regle.GenererCreneaux(cabinetId, type);

@@ -1,49 +1,83 @@
-﻿using Rendez_vous_microservice.Extensions;   // ✅ Importer tes extensions
-using Rendez_vous_microservice.Infrastructure.Hubs;
+﻿using DMI.RendezVous.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Rendez_vous_microservice.Domain.Interfaces;
 using Rendez_vous_microservice.Exceptions;
-using Hangfire;
+using Rendez_vous_microservice.Extensions;
+using Rendez_vous_microservice.Infrastructure.Persistence;
+using Rendez_vous_microservice.Infrastructure.Persistence.Services;
+using MassTransit;
+using StackExchange.Redis;
+using static Rendez_vous_microservice.Infrastructure.Persistence.Services.SignalRRdvNotifier;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ Récupération de la chaîne de connexion
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-if (string.IsNullOrWhiteSpace(connectionString))
-{
-    throw new InvalidOperationException("La chaîne de connexion 'DefaultConnection' est introuvable dans appsettings.json.");
-}
-
-// ✅ Enregistrement des couches via extensions
-builder.Services.AddDomain();
-builder.Services.AddApplication();
-builder.Services.AddInfrastructure(connectionString);
-builder.Services.AddHangfire(connectionString);
-builder.Services.AddSignalR();
-
-// ✅ Controllers / API
+#region Controllers + Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+#endregion
+
+#region DB
+builder.Services.AddDbContext<RendezVousDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+#endregion
+
+#region Unit of Work
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+#endregion
+
+#region MassTransit / RabbitMQ
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "rabbitmq", h =>
+        {
+            h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
+            h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
+        });
+        cfg.ConfigureEndpoints(context);
+    });
+});
+// ← AddMassTransitHostedService() supprimé (obsolète, enregistré automatiquement)
+#endregion
+
+#region Redis
+var redisConnection = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var config = ConfigurationOptions.Parse(redisConnection);
+    config.AbortOnConnectFail = false; // ne plante pas au démarrage si Redis absent
+    return ConnectionMultiplexer.Connect(config);
+});
+#endregion
+
+#region SignalR
+builder.Services.AddSignalR();
+#endregion
+
+#region Custom Services
+builder.Services.AddScoped<IEventPublisher, RabbitMqEventPublisher>();
+builder.Services.AddScoped<IRdvCacheService, RedisRdvCacheService>();
+builder.Services.AddScoped<IRdvNotifier, SignalRRdvNotifier>();
+#endregion
+
+#region Infrastructure
+builder.Services.AddInfrastructure();
+#endregion
 
 var app = builder.Build();
 
-// ✅ Pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseExceptionHandling();   // middleware custom
-app.UseJwtValidation();       // middleware JWT
-
-app.UseHttpsRedirection();
-app.UseRouting();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+// UseHttpsRedirection supprimé — inutile en Docker HTTP interne
 app.UseAuthorization();
-
-// ✅ Endpoints
 app.MapControllers();
-app.MapHub<AgendaHub>("/agendaHub");   // SignalR Hub
-app.MapHangfireDashboard();            // Dashboard Hangfire
+app.MapHub<RendezVousHub>("/rendezvousHub");
 
 app.Run();

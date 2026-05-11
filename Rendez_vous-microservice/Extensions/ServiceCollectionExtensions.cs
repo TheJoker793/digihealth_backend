@@ -23,26 +23,16 @@ namespace Rendez_vous_microservice.Extensions
             return services;
         }
 
-        public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services)
         {
-            // DbContext
-            services.AddDbContext<RendezVousDbContext>(options =>
-                options.UseSqlServer(connectionString));
-
-            // UnitOfWork
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
-
+            
+            
             // Repositories (si tu veux les injecter directement)
             services.AddScoped<RendezVousService>();
             services.AddScoped<CreneauService>();
             services.AddScoped<RappelService>();
 
-            // Services techniques
-            services.AddScoped<IEventPublisher, RabbitMqEventPublisher>();
-            services.AddScoped<IRdvCacheService, RedisRdvCacheService>();
-            services.AddScoped<IRdvNotifier, SignalRRdvNotifier>();
-           // services.AddScoped<IRappelService, RappelService>(); // ton implémentation métier
-
+            
             return services;
         }
         public static IServiceCollection AddHangfire(this IServiceCollection services, string connectionString)

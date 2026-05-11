@@ -1,0 +1,111 @@
+﻿services:
+
+  rabbitmq:
+    image: rabbitmq:management-alpine
+    container_name: digihealth-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - digihealth-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  auth-service:
+    build:
+      context: ./Auth-microservice
+      dockerfile: Dockerfile
+    container_name: digihealth-auth
+    ports:
+      - "5202:80"
+    networks:
+      - digihealth-net
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Development
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: guest
+      RabbitMQ__Password: guest
+      ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=digihealth;User ID=sa;Password=DigiHealth2024!;Encrypt=True;TrustServerCertificate=True;"
+
+  patient-service:
+    build:
+      context: ./Patient-microservice
+      dockerfile: Dockerfile
+    container_name: digihealth-patient
+    ports:
+      - "5100:80"
+    networks:
+      - digihealth-net
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Development
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: guest
+      RabbitMQ__Password: guest
+      ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=digihealth_patient;User ID=sa;Password=DigiHealth2024!;Encrypt=True;TrustServerCertificate=True;"
+
+  rendezvous-service:
+    build:
+      context: ./Rendez_Vous-microservice
+      dockerfile: Dockerfile
+    container_name: digihealth-rendezvous
+    ports:
+      - "5101:80"
+    networks:
+      - digihealth-net
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Development
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: guest
+      RabbitMQ__Password: guest
+      ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=digihealth_rv;User ID=sa;Password=DigiHealth2024!;Encrypt=True;TrustServerCertificate=True;"
+
+  api-gateway:
+    build:
+      context: ./API_Gateway-microservice
+      dockerfile: Dockerfile
+    container_name: digihealth-gateway
+    ports:
+      - "5140:80"
+    networks:
+      - digihealth-net
+    restart: always
+    depends_on:
+      auth-service:
+        condition: service_started
+      patient-service:
+        condition: service_started
+      rendezvous-service:
+        condition: service_started
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Development
+
+networks:
+  digihealth-net:
+    driver: bridge
