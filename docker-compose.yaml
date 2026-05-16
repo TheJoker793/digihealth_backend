@@ -1,4 +1,31 @@
-﻿services:
+﻿
+services:
+
+  cim11-api:
+    image: whoicd/icd-api
+    container_name: cim11-api
+    environment:
+      - acceptLicense=true
+      - saveAnalytics=false
+      - include=2026-01_en
+    ports:
+      - "5008:80"
+    networks: [dmi-net]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/ct"]
+      interval: 30s
+      retries: 5
+      start_period: 60s   # laisser le temps au chargement initial
+
+  cim11-svc:
+    build: { context: ../CIM11-microservice, dockerfile: Dockerfile }
+    environment:
+      - CIM11__BaseUrl=http://cim11-api:80
+      - CIM11__ApiVersion=v2
+      - CIM11__Language=en
+    depends_on:
+      cim11-api: { condition: service_healthy }
+    networks: [dmi-net]
 
   rabbitmq:
     image: rabbitmq:management-alpine

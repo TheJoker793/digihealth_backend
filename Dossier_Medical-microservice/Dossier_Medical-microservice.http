@@ -1,0 +1,6 @@
+@Dossier_Medical_microservice_HostAddress = http://localhost:5234
+
+GET {{Dossier_Medical_microservice_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,270 @@
+using DMI.DossierMedical.Application.DTOs.Requests;
+using DMI.DossierMedical.Application.DTOs.Responses;
+using DMI.DossierMedical.Application.Exceptions;
+using DMI.DossierMedical.Domain.Interfaces;
+
+namespace DMI.DossierMedical.Application.Services
+{
+    // =========================
+    // DIAGNOSTIC SERVICE
+    // =========================
+    public class DiagnosticService
+    {
+        private readonly IUnitOfWork      _uow;
+        private readonly ICim11Service    _cim11;
+        private readonly ILogger<DiagnosticService> _logger;
+
+        public DiagnosticService(
+            IUnitOfWork     uow,
+            ICim11Service   cim11,
+            ILogger<DiagnosticService> logger)
+        {
+            _uow    = uow;
+            _cim11  = cim11;
+            _logger = logger;
+        }
+
+        // ── Ajouter un diagnostic ────────────────────────────
+        public async Task<DiagnosticResponse> AddDiagnosticAsync(
+            Guid id, AddDiagnosticRequest req, CancellationToken ct)
+        {
+            var consultation = await _uow.Consultations.GetByIdAsync(id, ct)
+                ?? throw new NotFoundException($"Consultation {id} introuvable.");
+
+            // Enrichir le libellé via CIM-11 local Docker si non fourni
+            var libelle = req.LibelleCIM11;
+            if (string.IsNullOrWhiteSpace(libelle))
+            {
+                var detail = await _cim11.GetByCodeAsync(req.CodeCIM11, ct);
+                libelle = detail?.Libelle
+                    ?? throw new ValidationException($"Code CIM-11 '{req.CodeCIM11}' introuvable.");
+            }
+
+            var diagnostic = consultation.AddDiagnostic(
+                req.CodeCIM11, libelle, req.TypeDiagnostic, req.Commentaire);
+
+            await _uow.Consultations.UpdateAsync(consultation, ct);
+            await _uow.SaveChangesAsync(ct);
+
+            return new DiagnosticResponse(
+                diagnostic.Id, diagnostic.CodeCIM11, diagnostic.LibelleCIM11,
+                diagnostic.Type, diagnostic.Commentaire, diagnostic.EstConfirme,
+                diagnostic.CreatedAt);
+        }
+
+        // ── Obtenir diagnostics d'une consultation ───────────
+        public async Task<IEnumerable<DiagnosticResponse>> GetByConsultationAsync(
+            Guid consultationId, CancellationToken ct)
+        {
+            var diagnostics = await _uow.Diagnostics.GetByConsultationAsync(consultationId, ct);
+            return diagnostics.Select(d => new DiagnosticResponse(
+                d.Id, d.CodeCIM11, d.LibelleCIM11, d.Type,
+                d.Commentaire, d.EstConfirme, d.CreatedAt));
+        }
+
+        // ── Confirmer un diagnostic ──────────────────────────
+        public async Task ConfirmerAsync(Guid diagnosticId, CancellationToken ct)
+        {
+            var d = await _uow.Diagnostics.GetByIdAsync(diagnosticId, ct)
+                ?? throw new NotFoundException($"Diagnostic {diagnosticId} introuvable.");
+
+            d.Confirmer();
+            await _uow.Diagnostics.UpdateAsync(d, ct);
+            await _uow.SaveChangesAsync(ct);
+        }
+
+        // ── Modifier un diagnostic ───────────────────────────
+        public async Task ModifierAsync(
+            Guid diagnosticId, string libelle, string? commentaire, CancellationToken ct)
+        {
+            var d = await _uow.Diagnostics.GetByIdAsync(diagnosticId, ct)
+                ?? throw new NotFoundException($"Diagnostic {diagnosticId} introuvable.");
+
+            d.Modifier(libelle, commentaire);
+            await _uow.Diagnostics.UpdateAsync(d, ct);
+            await _uow.SaveChangesAsync(ct);
+        }
+
+        // ── Supprimer un diagnostic ──────────────────────────
+        public async Task DeleteAsync(Guid diagnosticId, CancellationToken ct)
+        {
+            var d = await _uow.Diagnostics.GetByIdAsync(diagnosticId, ct)
+                ?? throw new NotFoundException($"Diagnostic {diagnosticId} introuvable.");
+
+            if (d.EstConfirme)
+                throw new ConflictException("Un diagnostic confirmé ne peut pas être supprimé.");
+
+            await _uow.Diagnostics.DeleteAsync(diagnosticId, ct);
+            await _uow.SaveChangesAsync(ct);
+        }
+    }
+
+    // =========================
+    // ORDONNANCE SERVICE
+    // =========================
+    public class OrdonnanceService
+    {
+        private readonly IUnitOfWork     _uow;
+        private readonly IEventPublisher _publisher;
+        private readonly ILogger<OrdonnanceService> _logger;
+
+        public OrdonnanceService(
+            IUnitOfWork     uow,
+            IEventPublisher publisher,
+            ILogger<OrdonnanceService> logger)
+        {
+            _uow       = uow;
+            _publisher = publisher;
+            _logger    = logger;
+        }
+
+        // ── Créer une ordonnance ─────────────────────────────
+        public async Task<OrdonnanceResponse> CreateOrdonnanceAsync(
+            Guid consultationId, CreateOrdonnanceRequest req, CancellationToken ct)
+        {
+            var consultation = await _uow.Consultations.GetByIdAsync(consultationId, ct)
+                ?? throw new NotFoundException($"Consultation {consultationId} introuvable.");
+
+            var ordonnance = consultation.AddOrdonnance(req.ValiditeJours, req.Instructions);
+
+            // Ajouter les lignes
+            foreach (var ligne in req.Lignes)
+                ordonnance.AddLigne(
+                    ligne.MedicamentId,
+                    ligne.NomMedicament,
+                    ligne.Posologie,
+                    ligne.DureeJours,
+                    ligne.Quantite);
+
+            await _uow.Consultations.UpdateAsync(consultation, ct);
+            await _uow.SaveChangesAsync(ct);
+
+            foreach (var evt in consultation.DomainEvents)
+                await _publisher.PublishAsync(evt, ct);
+            consultation.ClearDomainEvents();
+
+            _logger.LogInformation(
+                "Ordonnance {OrdId} créée pour consultation {ConsId}",
+                ordonnance.Id, consultationId);
+
+            return ToResponse(ordonnance);
+        }
+
+        // ── Ordonnances d'une consultation ───────────────────
+        public async Task<IEnumerable<OrdonnanceResponse>> GetByConsultationAsync(
+            Guid consultationId, CancellationToken ct)
+        {
+            var ordonnances = await _uow.Ordonnances.GetByConsultationAsync(consultationId, ct);
+            return ordonnances.Select(ToResponse);
+        }
+
+        // ── Ordonnances actives d'un patient ─────────────────
+        public async Task<IEnumerable<OrdonnanceResponse>> GetActiveByPatientAsync(
+            Guid patientId, CancellationToken ct)
+        {
+            var ordonnances = await _uow.Ordonnances.GetActiveByPatientAsync(patientId, ct);
+            return ordonnances.Select(ToResponse);
+        }
+
+        // ── Mapper ───────────────────────────────────────────
+        private static OrdonnanceResponse ToResponse(Domain.Entities.Ordonnance o) => new(
+            o.Id, o.Date, o.ValiditeJours, o.IsExpired(), o.Instructions,
+            o.Lignes.Select(l => new LigneOrdonnanceResponse(
+                l.MedicamentId, l.NomMedicament,
+                l.Posologie, l.DureeJours, l.Quantite)));
+    }
+
+    // =========================
+    // DOCUMENT SERVICE
+    // =========================
+    public class DocumentService
+    {
+        private readonly IUnitOfWork    _uow;
+        private readonly IStorageService _storage;
+        private readonly ILogger<DocumentService> _logger;
+
+        public DocumentService(
+            IUnitOfWork     uow,
+            IStorageService storage,
+            ILogger<DocumentService> logger)
+        {
+            _uow     = uow;
+            _storage = storage;
+            _logger  = logger;
+        }
+
+        // ── Upload ───────────────────────────────────────────
+        public async Task<DocumentResponse> UploadAsync(
+            UploadDocumentRequest req, CancellationToken ct)
+        {
+            var dossier = await _uow.Dossiers.GetByIdAsync(req.DossierId, ct)
+                ?? throw new NotFoundException($"Dossier {req.DossierId} introuvable.");
+
+            // Upload vers MinIO
+            var chemin = await _storage.UploadAsync(
+                req.Contenu, req.FileName, req.MimeType, ct);
+
+            var doc = dossier.AddDocument(
+                req.TypeDocument, req.Titre,
+                chemin, req.MimeType,
+                req.Contenu.Length);
+
+            await _uow.Dossiers.UpdateAsync(dossier, ct);
+            await _uow.SaveChangesAsync(ct);
+
+            _logger.LogInformation(
+                "Document {Titre} uploadé pour dossier {DossierId}",
+                req.Titre, req.DossierId);
+
+            var url = await _storage.GetPresignedUrlAsync(chemin, 15, ct);
+            return ToResponse(doc, url);
+        }
+
+        // ── Liste documents d'un dossier ─────────────────────
+        public async Task<IEnumerable<DocumentResponse>> GetByDossierAsync(
+            Guid dossierId,
+            Domain.Enums.TypeDocument? type,
+            CancellationToken ct)
+        {
+            var docs = await _uow.Documents.GetByDossierAsync(dossierId, type, ct);
+            var responses = new List<DocumentResponse>();
+
+            foreach (var doc in docs)
+            {
+                var url = await _storage.GetPresignedUrlAsync(doc.CheminFichier, 15, ct);
+                responses.Add(ToResponse(doc, url));
+            }
+
+            return responses;
+        }
+
+        // ── Télécharger (URL pré-signée) ─────────────────────
+        public async Task<string> GetDownloadUrlAsync(Guid id, CancellationToken ct)
+        {
+            var doc = await _uow.Documents.GetByIdAsync(id, ct)
+                ?? throw new NotFoundException($"Document {id} introuvable.");
+
+            return await _storage.GetPresignedUrlAsync(doc.CheminFichier, 15, ct);
+        }
+
+        // ── Supprimer (soft delete) ──────────────────────────
+        public async Task DeleteAsync(Guid id, CancellationToken ct)
+        {
+            var doc = await _uow.Documents.GetByIdAsync(id, ct)
+                ?? throw new NotFoundException($"Document {id} introuvable.");
+
+            doc.SoftDelete();
+            await _uow.Documents.UpdateAsync(doc, ct);
+            await _uow.SaveChangesAsync(ct);
+
+            // Supprimer aussi du stockage MinIO
+            await _storage.DeleteAsync(doc.CheminFichier, ct);
+        }
+
+        // ── Mapper ───────────────────────────────────────────
+        private static DocumentResponse ToResponse(
+            Domain.Entities.DocumentMedical doc, string? url) => new(
+            doc.Id, doc.TypeDocument, doc.Titre,
+            doc.DateDocument, doc.MimeType, doc.TailleOctets, url);
+    }
+}

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rendez_Vous-microservice", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Éléments de solution", "Éléments de solution", "{9C8CB701-102D-CF49-A3E0-89AC09D42C2C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dossier_Medical-microservice", "Dossier_Medical-microservice\Dossier_Medical-microservice.csproj", "{DA54C363-4F0A-430E-B6CE-04E1379ABCBD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,10 @@ Global
 		{367D927B-BA5B-484D-806E-E5DDE6E63B49}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{367D927B-BA5B-484D-806E-E5DDE6E63B49}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{367D927B-BA5B-484D-806E-E5DDE6E63B49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA54C363-4F0A-430E-B6CE-04E1379ABCBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA54C363-4F0A-430E-B6CE-04E1379ABCBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA54C363-4F0A-430E-B6CE-04E1379ABCBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA54C363-4F0A-430E-B6CE-04E1379ABCBD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
