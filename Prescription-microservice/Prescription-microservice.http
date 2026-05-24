@@ -1,0 +1,6 @@
+@Prescription_microservice_HostAddress = http://localhost:5162
+
+GET {{Prescription_microservice_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

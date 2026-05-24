@@ -3,7 +3,7 @@
     "Name": "Nouveau profil",
     "Projects": [
       {
-        "Path": "Dossier_Medical-microservice\\Dossier_Medical-microservice.csproj",
+        "Path": "Prescription-microservice\\Prescription-microservice.csproj",
         "Action": "Start"
       }
     ]

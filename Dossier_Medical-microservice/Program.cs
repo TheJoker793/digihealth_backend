@@ -52,6 +52,8 @@ builder.Services.AddSwaggerGen(options =>
             Array.Empty<string>()
         }
     });
+
+    // ✅ Ajout du support upload fichier
 });
 
 // ✅ SignalR
