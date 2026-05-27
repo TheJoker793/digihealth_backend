@@ -2,10 +2,9 @@
 {
     public record ContournerInteractionRequest
     (
-    Guid InteractionId,
-    Guid MedecinId,
-    string Justification
-
-
+        Guid PrescriptionId,
+        Guid InteractionId,
+        Guid MedecinId,
+        string Justification
     );
 }

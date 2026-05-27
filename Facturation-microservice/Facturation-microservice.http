@@ -1,0 +1,6 @@
+@Facturation_microservice_HostAddress = http://localhost:5246
+
+GET {{Facturation_microservice_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

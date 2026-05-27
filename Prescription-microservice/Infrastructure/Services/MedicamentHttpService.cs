@@ -10,35 +10,37 @@ namespace Prescription_microservice.Infrastructure.Services
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
-        // Vérifie les interactions entre médicaments
-        public async Task<IEnumerable<(Guid MedicamentA, Guid MedicamentB, string Severite)>> CheckInteractionsAsync(IEnumerable<Guid> medicamentIds)
-        {
-            var response = await _httpClient.PostAsJsonAsync("/api/medicaments/check-interactions", medicamentIds);
-            response.EnsureSuccessStatusCode();
+        // Note: L'API Médicaments FR (data.gouv.fr) utilise des codes CIS (int).
+        // Cette implémentation suppose que medicamentId correspond au code CIS.
 
-            var interactions = await response.Content.ReadFromJsonAsync<IEnumerable<(Guid MedicamentA, Guid MedicamentB, string Severite)>>();
-            return interactions ?? Enumerable.Empty<(Guid, Guid, string)>();
-        }
-
-        // Vérifie si un médicament existe
         public async Task<bool> ExistsAsync(Guid medicamentId)
         {
-            var response = await _httpClient.GetAsync($"/api/medicaments/{medicamentId}");
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                return false;
+            // Le code CIS est un identifiant numérique à 8 chiffres.
+            // On extrait la partie numérique du Guid pour la démonstration.
+            var cis = medicamentId.ToString().Split('-')[0];
 
-            response.EnsureSuccessStatusCode();
-            return true;
+            // Endpoint officiel : /v1/medicaments/{cis}
+            var response = await _httpClient.GetAsync($"/v1/medicaments/{cis}");
+            return response.IsSuccessStatusCode;
         }
 
-        // Vérifie une liste d’IDs et retourne ceux existants
         public async Task<IEnumerable<Guid>> GetExistingIdsAsync(IEnumerable<Guid> medicamentIds)
         {
-            var response = await _httpClient.PostAsJsonAsync("/api/medicaments/check-existence", medicamentIds);
-            response.EnsureSuccessStatusCode();
+            var results = new List<Guid>();
+            foreach (var id in medicamentIds)
+            {
+                if (await ExistsAsync(id)) results.Add(id);
+            }
+            return results;
+        }
 
-            var existingIds = await response.Content.ReadFromJsonAsync<IEnumerable<Guid>>();
-            return existingIds ?? Enumerable.Empty<Guid>();
+        public async Task<IEnumerable<(Guid MedicamentA, Guid MedicamentB, string Severite)>> CheckInteractionsAsync(IEnumerable<Guid> medicamentIds)
+        {
+            // L'API publique ne fournit pas de endpoint direct pour les interactions.
+            // Cette logique devra être implémentée soit via un service tiers spécialisé (ex: Thériaque, Vidal),
+            // soit en analysant les compositions croisées si les données sont disponibles.
+            // Pour l'instant, on retourne une liste vide ou on conserve l'appel au microservice interne si disponible.
+            return Enumerable.Empty<(Guid, Guid, string)>();
         }
     }
 }

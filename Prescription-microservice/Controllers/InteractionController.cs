@@ -24,23 +24,21 @@ namespace Prescription_microservice.Controllers
             return Ok(interactions);
         }
 
-        // PUT /api/v1/prescriptions/{id}/interactions/{iid}/contourner
-        [HttpPut("{iid}/contourner")]
+        // PUT /api/prescriptions/{id}/interactions/{iid}/contourner
+        [HttpPut("{id}/interactions/{iid}/contourner")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Policy = "MedecinOnly")]
         public async Task<IActionResult> Contourner(Guid id, Guid iid, [FromBody] string justification)
         {
-            // ⚠️ MedecinId peut être récupéré via le JWT (claims) ou passé en body
-            var medecinIdClaim = User.FindFirst("sub")?.Value
+            var medecinIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                                 ?? User.FindFirst("sub")?.Value
                                  ?? throw new InvalidOperationException("MedecinId introuvable dans le token.");
 
             var request = new ContournerInteractionRequest(
+                id,
                 iid,
                 Guid.Parse(medecinIdClaim),
                 justification
-            )
-            {
-                // PrescriptionId n’est pas dans ton record actuel, 
-                // si besoin ajoute-le dans le DTO pour plus de cohérence
-            };
+            );
 
             await _service.ContournerInteractionAsync(request);
             return Ok();

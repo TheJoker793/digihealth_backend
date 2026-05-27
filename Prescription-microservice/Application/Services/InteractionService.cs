@@ -2,6 +2,7 @@
 using Prescription_microservice.Domain.Enums;
 using Prescription_microservice.Domain.Interfaces;
 using Prescription_microservice.Application.DTOs.Requests;
+using Prescription_microservice.Application.Exceptions;
 
 namespace Prescription_microservice.Application.Services
 {
@@ -60,9 +61,9 @@ namespace Prescription_microservice.Application.Services
         // ── CONTOURNER INTERACTION ────────────────────────────
         public async Task ContournerInteractionAsync(ContournerInteractionRequest request, CancellationToken ct = default)
         {
-            var interactions = await _unitOfWork.Interactions.GetByPrescriptionAsync(request.InteractionId, ct);
+            var interactions = await _unitOfWork.Interactions.GetByPrescriptionAsync(request.PrescriptionId, ct);
             var interaction = interactions.FirstOrDefault(i => i.Id == request.InteractionId)
-                ?? throw new InvalidOperationException("Interaction introuvable.");
+                ?? throw new NotFoundException("Interaction introuvable pour cette prescription.");
 
             interaction.Contourner(request.Justification, request.MedecinId);
             await _unitOfWork.SaveChangesAsync(ct);

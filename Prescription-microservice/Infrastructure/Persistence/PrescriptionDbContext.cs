@@ -16,7 +16,9 @@ namespace Prescription_microservice.Infrastructure.Persistence
         {
             base.OnModelCreating(modelBuilder);
 
-            // Audit automatique
+            modelBuilder.ApplyConfigurationsFromAssembly(
+                typeof(PrescriptionDbContext).Assembly);
+
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))

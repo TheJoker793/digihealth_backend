@@ -1,4 +1,4 @@
-﻿namespace Dossier_medical_microservice.Domain.Entities
+﻿namespace Patient_microservice.Domain.Entities
 {
 
     public abstract class BaseEntity
