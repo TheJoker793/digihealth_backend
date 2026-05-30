@@ -1,4 +1,4 @@
-using Hangfire;
+﻿using Hangfire;
 using Notification_microservice.Infrastructure.Extensions;
 using Notification_microservice.Infrastructure.Jobs;
 using Notification_microservice.Infrastructure.Persistence;
@@ -6,12 +6,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Notification_microservice.Middlewares;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ????????????????????????????????????????????????
+// ════════════════════════════════════════════════
 // SERILOG
-// ????????????????????????????????????????????????
+// ════════════════════════════════════════════════
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -20,9 +22,9 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// ????????????????????????????????????????????????
+// ════════════════════════════════════════════════
 // SERVICES
-// ????????????????????????????????????????????????
+// ════════════════════════════════════════════════
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection")!;
 
 builder.Services
@@ -40,7 +42,7 @@ builder.Services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// ?? Swagger avec auth Bearer ?????????????????????
+// ── Swagger avec auth Bearer ─────────────────────
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -73,34 +75,52 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ?? Health checks ????????????????????????????????
+// ── Health checks ────────────────────────────────
 builder.Services
     .AddHealthChecks()
     .AddSqlServer(connStr, name: "sqlserver")
     .AddRedis(
         builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379",
         name: "redis")
-    .AddRabbitMQ(
-        $"amqp://{builder.Configuration["RabbitMq:Username"]}:{builder.Configuration["RabbitMq:Password"]}@{builder.Configuration["RabbitMq:Host"]}/",
-        name: "rabbitmq");
+    .AddCheck("rabbitmq", () =>
+    {
+        try
+        {
+            var factory = new RabbitMQ.Client.ConnectionFactory
+            {
+                Uri = new Uri($"amqp://{builder.Configuration["RabbitMq:Username"]}:{builder.Configuration["RabbitMq:Password"]}@{builder.Configuration["RabbitMq:Host"]}/")
+            };
 
-// ????????????????????????????????????????????????
+            using var connection = factory.CreateConnectionAsync();
+            return HealthCheckResult.Healthy();
+        }
+        catch
+        {
+            return HealthCheckResult.Unhealthy();
+        }
+    });
+
+
+;
+
+
+// ════════════════════════════════════════════════
 // BUILD
-// ????????????????????????????????????????????????
+// ════════════════════════════════════════════════
 var app = builder.Build();
 
-// ?? Migrations auto au d�marrage ?????????????????
+// ── Migrations auto au démarrage ─────────────────
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
     await db.Database.MigrateAsync();
 }
 
-// ????????????????????????????????????????????????
+// ════════════════════════════════════════════════
 // PIPELINE MIDDLEWARES (ordre obligatoire)
-// ????????????????????????????????????????????????
+// ════════════════════════════════════════════════
 
-// 1. Exception handler � doit �tre en premier
+// 1. Exception handler — doit être en premier
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // 2. Swagger (dev uniquement)
@@ -114,7 +134,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// 3. Logging des requ�tes HTTP
+// 3. Logging des requêtes HTTP
 app.UseSerilogRequestLogging();
 
 // 4. HTTPS
@@ -124,13 +144,13 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 6. Hangfire Dashboard � acc�s local uniquement
+// 6. Hangfire Dashboard — accès local uniquement
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
     Authorization = [new Hangfire.Dashboard.LocalRequestsOnlyAuthorizationFilter()]
 });
 
-// 7. Enregistrer les jobs r�currents
+// 7. Enregistrer les jobs récurrents
 HangfireJobRegistrar.EnregistrerJobs();
 
 // 8. Health checks
