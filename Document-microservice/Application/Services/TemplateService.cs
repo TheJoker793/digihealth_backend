@@ -12,6 +12,13 @@ namespace Document_microservice.Application.Services
 
         public TemplateService(IUnitOfWork uow) => _uow = uow;
 
+
+        public async Task<IEnumerable<TemplateResponse>> GetAllAsync(
+            CancellationToken ct = default)
+                {
+                    var templates = await _uow.Templates.GetAllAsync(ct);
+                    return templates.Select(ToResponse);
+        }
         public async Task<TemplateResponse> CreerAsync(
             CreerTemplateRequest request,
             CancellationToken ct = default)

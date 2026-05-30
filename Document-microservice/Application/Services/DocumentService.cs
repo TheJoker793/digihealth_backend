@@ -203,6 +203,39 @@ namespace Document_microservice.Application.Services
         }
 
         // ═══════════════════════════════════════════════════════
+        // GET DOWNLOAD URL
+        // ═══════════════════════════════════════════════════════
+        public async Task<UrlPresigneeResponse> GetDownloadUrlAsync(
+            Guid documentId,
+            CancellationToken ct = default)
+        {
+            return await TelechargerAsync(documentId, ct);
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // DELETE
+        // ═══════════════════════════════════════════════════════
+        public async Task DeleteAsync(
+            Guid documentId,
+            CancellationToken ct = default)
+        {
+            var document = await _uow.Documents.GetAvecVersionsAsync(documentId, ct)
+                ?? throw new DocumentNotFoundException(documentId);
+
+            // supprimer fichiers MinIO
+            foreach (var version in document.Versions)
+            {
+                await _storage.SupprimerAsync(version.CheminFichier, ct);
+            }
+
+            _uow.Documents.Remove(document);
+
+            await _uow.SaveChangesAsync(ct);
+
+            await _cache.InvaliderAsync(documentId);
+        }
+
+        // ═══════════════════════════════════════════════════════
         // HELPERS PRIVÉS
         // ═══════════════════════════════════════════════════════
         private static FormatFichier DetecterFormat(IFormFile fichier)

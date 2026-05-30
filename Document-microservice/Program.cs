@@ -1,4 +1,16 @@
+using Document_microservice.Extensions;
+using Document_microservice.Middlewares;
+
 var builder = WebApplication.CreateBuilder(args);
+
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Missing DefaultConnection");
+builder.Services
+.AddDatabase(connectionString)
+.AddUnitOfWork()
+.AddApplicationServices()
+.AddInfrastructureServices(builder.Configuration);
 
 // Add services to the container.
 
@@ -16,10 +28,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseExceptionHandling();   // ton middleware custom
+app.UseCorrelationId();       // ajoute X-Correlation-Id
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();

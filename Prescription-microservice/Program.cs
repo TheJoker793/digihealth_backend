@@ -7,8 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 // =========================
 // Services
 // =========================
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Missing DefaultConnection");
 builder.Services
     .AddDatabase(connectionString)
     .AddRepositories()
