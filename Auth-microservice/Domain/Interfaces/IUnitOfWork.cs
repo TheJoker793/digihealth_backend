@@ -3,6 +3,7 @@
 public interface IUnitOfWork
 {
     IUserRepository Users { get; }
+    ICabinetRepository Cabinets { get; }
     IRefreshTokenRepository RefreshTokens { get; }
 
     Task<int> SaveChangesAsync(CancellationToken ct = default);

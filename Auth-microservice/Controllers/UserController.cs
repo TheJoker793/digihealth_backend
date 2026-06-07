@@ -2,6 +2,8 @@
 using Auth_microservice.Domain.Enums;
 using Auth_microservice.Domain.Interfaces;
 using Auth_microservice.DTOs.Requests;
+using Auth_microservice.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Auth_microservice.Controllers
@@ -11,12 +13,21 @@ namespace Auth_microservice.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUnitOfWork _uow;
+        private readonly UserService userService;
         private readonly IPasswordHasher _hasher;
 
-        public UserController(IUnitOfWork uow, IPasswordHasher hasher)
+        public UserController(IUnitOfWork uow, IPasswordHasher hasher,UserService service)
         {
             _uow = uow;
             _hasher = hasher;
+            userService = service;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<User>>> GetUsersAsync() 
+        {
+            var users = await userService.GetAllUsersAsync();
+            return Ok(users);
         }
 
         // POST api/v1/user/create
@@ -74,7 +85,7 @@ namespace Auth_microservice.Controllers
 
         // PUT api/v1/user/{id}/role
         [HttpPut("{id}/role")]
-        public async Task<IActionResult> ChangeRole(
+                public async Task<IActionResult> ChangeRole(
             Guid id,
             [FromBody] ChangeRoleRequest request,
             CancellationToken ct)
@@ -83,9 +94,8 @@ namespace Auth_microservice.Controllers
             if (user is null)
                 return NotFound(new { message = "Utilisateur introuvable." });
 
-            // Deactivate/Activate n'existent pas pour le rôle
-            // → on expose via UpdateAsync directement
-            // TODO : ajouter user.ChangeRole(request.Role) dans l'entité
+            user.ChangeRole((Role)request.Role);
+
             await _uow.Users.UpdateAsync(user, ct);
             await _uow.SaveChangesAsync(ct);
 
@@ -94,13 +104,25 @@ namespace Auth_microservice.Controllers
 
         // POST api/v1/user/{id}/reset-password
         [HttpPost("{id}/reset-password")]
-        public async Task<IActionResult> ResetPassword(Guid id, CancellationToken ct)
+        [Authorize]
+        public async Task<IActionResult> ResetPassword(
+    Guid id,
+    [FromBody] ChangePasswordRequest request,
+    CancellationToken ct)
         {
             var user = await _uow.Users.GetByIdAsync(id, ct);
             if (user is null)
                 return NotFound(new { message = "Utilisateur introuvable." });
 
-            // TODO : brancher IEmailService
+            if (!_hasher.Verify(request.CurrentPassword, user.HashedPassword))
+                return BadRequest(new { message = "Mot de passe actuel incorrect." });
+
+            var hashedNew = _hasher.Hash(request.NewPassword);
+            user.ChangePassword(hashedNew);
+
+            await _uow.Users.UpdateAsync(user, ct);
+            await _uow.SaveChangesAsync(ct);
+
             return NoContent();
         }
     }

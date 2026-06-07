@@ -2,5 +2,5 @@
 
 namespace Auth_microservice.DTOs.Requests
 {
-    public record ChangeRoleRequest(Role Role);
+    public record ChangeRoleRequest(int Role);
 }

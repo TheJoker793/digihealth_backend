@@ -3,7 +3,7 @@
     "Name": "Nouveau profil",
     "Projects": [
       {
-        "Path": "Facturation-microservice\\Facturation-microservice.csproj",
+        "Path": "Auth-microservice\\Auth-microservice.csproj",
         "Action": "Start"
       }
     ]

@@ -30,7 +30,7 @@ namespace Auth_microservice.Extensions
                                 Id = "Bearer"
                             }
                         },
-                        new string[] {}
+                        Array.Empty<string>()
                     }
                 });
             });

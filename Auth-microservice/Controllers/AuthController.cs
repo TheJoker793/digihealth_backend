@@ -1,6 +1,8 @@
 ﻿using Auth_microservice.DTOs.Requests;
 using Auth_microservice.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Auth_microservice.Controllers
 {
@@ -9,10 +11,12 @@ namespace Auth_microservice.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
+        private readonly IUnitOfWork _uow;
 
-        public AuthController(AuthService authService)
+        public AuthController(AuthService authService, IUnitOfWork uow)
         {
             _authService = authService;
+            _uow = uow;
         }
 
         // =========================
@@ -48,9 +52,30 @@ namespace Auth_microservice.Controllers
         // USER INFO
         // =========================
         [HttpGet("userinfo")]
-        public IActionResult UserInfo()
+        [Authorize]
+        public async Task<IActionResult> UserInfo(CancellationToken ct)
         {
-            return Ok(new { message = "secured endpoint" });
+            // ← remplace JwtRegisteredClaimNames.Sub par ClaimTypes.NameIdentifier
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            Console.WriteLine($"UserId from claims: {userId}");
+            Console.WriteLine($"All claims: {string.Join(", ", User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
+
+            if (userId is null)
+                return Unauthorized(new { message = "User ID not found in token" });
+
+            var user = await _uow.Users.GetByIdAsync(Guid.Parse(userId), ct);
+            if (user is null)
+                return NotFound(new { message = "User not found" });
+
+            return Ok(new
+            {
+                id = user.Id,
+                login = user.Login,
+                role = user.Role.ToString(),
+                cabinetId = user.CabinetId,
+                isActive = user.IsActive
+            });
         }
     }
 }

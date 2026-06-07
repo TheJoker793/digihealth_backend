@@ -19,6 +19,12 @@ namespace Auth_microservice.Services
         // =========================
         // CREATE USER
         // =========================
+
+        public async Task <IEnumerable<User>> GetAllUsersAsync() 
+        {
+            var users = await _uow.Users.GetAllAsync();
+            return users;
+        }
         public async Task<Guid> CreateUserAsync(string login, string password, Role role, string cabinetId)
         {
             var existing = await _uow.Users.GetByLoginAsync(login);

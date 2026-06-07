@@ -9,15 +9,18 @@ namespace Auth_microservice.Persistance
         private IDbContextTransaction? _transaction;
 
         public IUserRepository Users { get; }
+        public ICabinetRepository Cabinets { get; }
         public IRefreshTokenRepository RefreshTokens { get; }
 
         public UnitOfWork(
             AuthDbContext context,
             IUserRepository userRepository,
+            ICabinetRepository cabinetRepository,
             IRefreshTokenRepository refreshTokenRepository)
         {
             _context = context;
             Users = userRepository;
+            Cabinets = cabinetRepository;
             RefreshTokens = refreshTokenRepository;
         }
 

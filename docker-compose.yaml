@@ -12,7 +12,6 @@
     networks:
       - digihealth-net
     restart: unless-stopped
-    # ❌ HEALTHCHECK SUPPRIMÉ (cause de crash possible)
 
   rabbitmq:
     image: rabbitmq:management-alpine
@@ -212,7 +211,15 @@
         condition: service_started
       rendezvous-service:
         condition: service_started
+      dossier-medical-service:
+        condition: service_started
+      prescription-service:
+        condition: service_started
+      facturation-service:
+        condition: service_started
       cim11-api:
+        condition: service_started
+      rabbitmq:
         condition: service_started
     environment:
       ASPNETCORE_URLS: http://+:80

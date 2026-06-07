@@ -14,6 +14,8 @@ namespace Auth_microservice.Persistance
         // DBSets
         // =========================
         public DbSet<User> Users => Set<User>();
+        public DbSet<Cabinet> Cabinets => Set<Cabinet>();
+
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         // =========================

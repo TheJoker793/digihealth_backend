@@ -118,9 +118,10 @@ namespace Auth_microservice.Domain.Entities
             }
         }
 
-        internal void ChangePassword(string v)
+        public void ChangePassword(string hashedPassword)
         {
-            throw new NotImplementedException();
+            HashedPassword = hashedPassword;
+            UpdatedAt = DateTimeOffset.UtcNow;
         }
 
 

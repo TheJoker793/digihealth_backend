@@ -1,6 +1,7 @@
 ﻿using Auth_microservice.Domain.Entities;
 using Auth_microservice.Persistance;
 using Microsoft.EntityFrameworkCore;
+
 namespace Auth_microservice.Repositories
 {
     public class UserRepository : IUserRepository
@@ -59,6 +60,11 @@ namespace Auth_microservice.Repositories
         {
             _context.Users.Update(user);
             return Task.CompletedTask;
+        }
+
+        public async Task<List<User>> GetAllAsync(CancellationToken ct = default)
+        {
+            return await _context.Users.ToListAsync();
         }
     }
 }

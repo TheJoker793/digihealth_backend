@@ -1,55 +1,1053 @@
 {
   "GlobalConfiguration": {
-    "BaseUrl": "http://localhost:5140"
+    "BaseUrl": "http://localhost:5000",
+    "RequestIdKey": "X-Correlation-Id",
+    "HttpHandlerOptions": {
+      "AllowAutoRedirect": false,
+      "UseCookieContainer": false,
+      "UseTracing": false,
+      "MaxConnectionsPerServer": 100
+    },
+    "QoSOptions": {
+      "ExceptionsAllowedBeforeBreaking": 5,
+      "DurationOfBreak": 15000,
+      "TimeoutValue": 10000
+    },
+    "RateLimitOptions": {
+      "DisableRateLimitHeaders": false,
+      "QuotaExceededMessage": "Trop de requêtes — réessayez dans un moment.",
+      "HttpStatusCode": 429,
+      "ClientIdHeader": "X-Client-Id"
+    }
   },
+
   "Routes": [
+
+    // ══════════════════════════════════════════════
+    // AUTH.SVC — port 5001
+    // ══════════════════════════════════════════════
     {
       "UpstreamPathTemplate": "/gateway/auth/login",
       "UpstreamHttpMethod": [ "POST" ],
-      "DownstreamPathTemplate": "/api/v1/auth/login",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "auth-service",
-          "Port": 80
+          "Host": "auth-svc",
+          "Port": 5001
         }
-      ]
+      ],
+      "DownstreamPathTemplate": "/api/v1/auth/login",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 10
+      }
     },
     {
       "UpstreamPathTemplate": "/gateway/auth/refresh",
       "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-svc",
+          "Port": 5001
+        }
+      ],
       "DownstreamPathTemplate": "/api/v1/auth/refresh",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "auth-service",
-          "Port": 80
-        }
-      ]
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 20
+      }
     },
     {
-      "UpstreamPathTemplate": "/gateway/patients/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
-      "DownstreamPathTemplate": "/api/v1/patients/{everything}",
+      "UpstreamPathTemplate": "/gateway/auth/2fa/verify",
+      "UpstreamHttpMethod": [ "POST" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "patient-service",
-          "Port": 80
+          "Host": "auth-svc",
+          "Port": 5001
         }
-      ]
+      ],
+      "DownstreamPathTemplate": "/api/v1/auth/2fa/verify",
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 5
+      }
     },
     {
-      "UpstreamPathTemplate": "/gateway/rendezvous/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
-      "DownstreamPathTemplate": "/api/v1/rendezvous/{everything}",
+      "UpstreamPathTemplate": "/gateway/auth/logout",
+      "UpstreamHttpMethod": [ "POST" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "rendezvous-service",
-          "Port": 80
+          "Host": "auth-svc",
+          "Port": 5001
         }
-      ]
+      ],
+      "DownstreamPathTemplate": "/api/v1/auth/logout",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/auth/userinfo",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-svc",
+          "Port": 5001
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/auth/userinfo",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/auth/change-password",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-svc",
+          "Port": 5001
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/auth/change-password",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/auth/2fa/setup",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-svc",
+          "Port": 5001
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/twofactor/setup",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/auth/2fa/disable",
+      "UpstreamHttpMethod": [ "DELETE" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-svc",
+          "Port": 5001
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/twofactor/disable",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/.well-known/jwks.json",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-svc",
+          "Port": 5001
+        }
+      ],
+      "DownstreamPathTemplate": "/.well-known/jwks.json"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/users",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-svc",
+          "Port": 5001
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/user/create",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/users/{id}/disable",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-svc",
+          "Port": 5001
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/user/{id}/disable",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/users/{id}/role",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-svc",
+          "Port": 5001
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/user/{id}/role",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/users/{id}/reset-password",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-svc",
+          "Port": 5001
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/user/{id}/reset-password",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Admin" }
+    },
+
+    // ══════════════════════════════════════════════
+    // PATIENT.SVC — port 5100
+    // ══════════════════════════════════════════════
+    {
+      "UpstreamPathTemplate": "/gateway/patients",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-svc",
+          "Port": 5100
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/patient",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/recherche",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-svc",
+          "Port": 5100
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/patient/recherche",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-svc",
+          "Port": 5100
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/patient/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Infirmier,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-svc",
+          "Port": 5100
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/patient",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/{id}",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-svc",
+          "Port": 5100
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/patient/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/{id}/antecedents",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-svc",
+          "Port": 5100
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/patient/{id}/antecedents",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/{id}/couverture",
+      "UpstreamHttpMethod": [ "GET", "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-svc",
+          "Port": 5100
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/patient/{id}/couverture",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+
+    // ══════════════════════════════════════════════
+    // RENDEZVOUS.SVC — port 5200
+    // ══════════════════════════════════════════════
+    {
+      "UpstreamPathTemplate": "/gateway/rendezvous",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "rendezvous-svc",
+          "Port": 5200
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/rendezvous",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/rendezvous/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "rendezvous-svc",
+          "Port": 5200
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/rendezvous/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Infirmier,Patient,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/rendezvous",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "rendezvous-svc",
+          "Port": 5200
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/rendezvous",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Patient,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/rendezvous/{id}/confirmer",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "rendezvous-svc",
+          "Port": 5200
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/rendezvous/{id}/confirmer",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/rendezvous/{id}/annuler",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "rendezvous-svc",
+          "Port": 5200
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/rendezvous/{id}/annuler",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Patient,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/creneaux",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "rendezvous-svc",
+          "Port": 5200
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/creneau",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/agenda/{medecinId}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "rendezvous-svc",
+          "Port": 5200
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/rendezvous/medecin/{medecinId}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+
+    // ══════════════════════════════════════════════
+    // DOSSIERMEDICAL.SVC — port 5300
+    // ══════════════════════════════════════════════
+    {
+      "UpstreamPathTemplate": "/gateway/dossiers/{patientId}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "dossier-svc",
+          "Port": 5300
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/dossier/patient/{patientId}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/consultations",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "dossier-svc",
+          "Port": 5300
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/consultation",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/consultations/{id}",
+      "UpstreamHttpMethod": [ "GET", "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "dossier-svc",
+          "Port": 5300
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/consultation/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/consultations/{id}/cloturer",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "dossier-svc",
+          "Port": 5300
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/consultation/{id}/cloturer",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/constantes",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "dossier-svc",
+          "Port": 5300
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/constante",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Infirmier,Admin" }
+    },
+
+    // ══════════════════════════════════════════════
+    // PRESCRIPTION.SVC — port 5400
+    // ══════════════════════════════════════════════
+    {
+      "UpstreamPathTemplate": "/gateway/prescriptions",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "prescription-svc",
+          "Port": 5400
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/prescription",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/prescriptions/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "prescription-svc",
+          "Port": 5400
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/prescription/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Infirmier,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/prescriptions/{id}/signer",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "prescription-svc",
+          "Port": 5400
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/prescription/{id}/signer",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/prescriptions/patient/{patientId}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "prescription-svc",
+          "Port": 5400
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/prescription/patient/{patientId}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Infirmier,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/interactions/verifier",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "prescription-svc",
+          "Port": 5400
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/interaction/verifier",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+
+    // ══════════════════════════════════════════════
+    // DOCUMENT.SVC — port 5500
+    // ══════════════════════════════════════════════
+    {
+      "UpstreamPathTemplate": "/gateway/documents/upload",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "document-svc",
+          "Port": 5500
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/document/upload",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/documents/patient/{patientId}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "document-svc",
+          "Port": 5500
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/document/patient/{patientId}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/documents/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "document-svc",
+          "Port": 5500
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/document/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Infirmier,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/documents/{id}/download",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "document-svc",
+          "Port": 5500
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/document/{id}/download",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Infirmier,Patient,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/documents/{id}/archiver",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "document-svc",
+          "Port": 5500
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/document/{id}/archiver",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/documents/partager",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "document-svc",
+          "Port": 5500
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/partage",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/documents/acces/{token}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "document-svc",
+          "Port": 5500
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/partage/acces/{token}"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/documents/{id}/versions",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "document-svc",
+          "Port": 5500
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/version/{id}/versions",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+
+    // ══════════════════════════════════════════════
+    // FACTURATION.SVC — port 5600
+    // ══════════════════════════════════════════════
+    {
+      "UpstreamPathTemplate": "/gateway/factures",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "facturation-svc",
+          "Port": 5600
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/facture",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/factures/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "facturation-svc",
+          "Port": 5600
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/facture/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/factures/{id}/payer",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "facturation-svc",
+          "Port": 5600
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/facture/{id}/payer",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/factures/{id}/annuler",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "facturation-svc",
+          "Port": 5600
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/facture/{id}/annuler",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/factures/{id}/exporter",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "facturation-svc",
+          "Port": 5600
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/facture/{id}/exporter",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/factures/patient/{patientId}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "facturation-svc",
+          "Port": 5600
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/facture/patient/{patientId}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+
+    // ══════════════════════════════════════════════
+    // NOTIFICATION.SVC — port 5700
+    // ══════════════════════════════════════════════
+    {
+      "UpstreamPathTemplate": "/gateway/notifications/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "notification-svc",
+          "Port": 5700
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/notification/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/notifications/destinataire/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "notification-svc",
+          "Port": 5700
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/notification/destinataire/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/notifications/envoyer",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "notification-svc",
+          "Port": 5700
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/notification/envoyer",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/preferences/{destinataireId}",
+      "UpstreamHttpMethod": [ "GET", "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "notification-svc",
+          "Port": 5700
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/preference/{destinataireId}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/preferences/{destinataireId}/opt-out",
+      "UpstreamHttpMethod": [ "POST", "DELETE" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "notification-svc",
+          "Port": 5700
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/preference/{destinataireId}/opt-out",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" }
+    },
+
+    // ══════════════════════════════════════════════
+    // STATISTIQUE.SVC — port 5800
+    // ══════════════════════════════════════════════
+    {
+      "UpstreamPathTemplate": "/gateway/statistiques/rapports/generer",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "statistique-svc",
+          "Port": 5800
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/rapport/generer",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/statistiques/rapports/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "statistique-svc",
+          "Port": 5800
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/rapport/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/statistiques/rapports/{id}/exporter",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "statistique-svc",
+          "Port": 5800
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/rapport/{id}/exporter",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/statistiques/kpis",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "statistique-svc",
+          "Port": 5800
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/kpi",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/statistiques/tableaux",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "statistique-svc",
+          "Port": 5800
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/tableau",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/statistiques/tableaux/{id}/dashboard",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "statistique-svc",
+          "Port": 5800
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/tableau/{id}/dashboard",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/statistiques/abonnements",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "statistique-svc",
+          "Port": 5800
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/abonnement",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+
+    // ══════════════════════════════════════════════
+    // AUDIT.SVC — port 5900
+    // ══════════════════════════════════════════════
+    {
+      "UpstreamPathTemplate": "/gateway/audit/logs",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "audit-svc",
+          "Port": 5900
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/audit",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/audit/logs/{entiteId}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "audit-svc",
+          "Port": 5900
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/audit/{entiteId}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Admin" }
+    },
+
+    // ══════════════════════════════════════════════
+    // CIM11.SVC — port 5008
+    // ══════════════════════════════════════════════
+    {
+      "UpstreamPathTemplate": "/gateway/cim11/recherche",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "cim11-svc",
+          "Port": 5008
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/cim11/recherche",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/cim11/{code}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "cim11-svc",
+          "Port": 5008
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/cim11/{code}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+
+    // ══════════════════════════════════════════════
+    // MEDICAMENT.SVC — port 5009
+    // ══════════════════════════════════════════════
+    {
+      "UpstreamPathTemplate": "/gateway/medicaments/recherche",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "medicament-svc",
+          "Port": 5009
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/medicament/recherche",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Infirmier,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/medicaments/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "medicament-svc",
+          "Port": 5009
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/medicament/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Infirmier,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/medicaments/interactions",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "medicament-svc",
+          "Port": 5009
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/medicament/interactions",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
     }
   ]
 }

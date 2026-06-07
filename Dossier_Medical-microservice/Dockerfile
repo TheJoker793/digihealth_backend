@@ -1,30 +1,23 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
+﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
+
+# 👉 Port standard pour microservices .NET
+EXPOSE 80
+
+# 👉 Important : force l'écoute sur le bon port
+ENV ASPNETCORE_URLS=http://+:80
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
-
 WORKDIR /src
 
-COPY ["Dossier_Medical-microservice.csproj", "."]
-RUN dotnet restore "Dossier_Medical-microservice.csproj"
+COPY ["Dossier_Medical-microservice.csproj", "./"]
+RUN dotnet restore
 
 COPY . .
-
-RUN dotnet build "Dossier_Medical-microservice.csproj" \
-    -c $BUILD_CONFIGURATION \
-    -o /app/build
+RUN dotnet build -c Release -o /app/build
 
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-
-RUN dotnet publish "Dossier_Medical-microservice.csproj" \
-    -c $BUILD_CONFIGURATION \
-    -o /app/publish \
-    /p:UseAppHost=false
+RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
