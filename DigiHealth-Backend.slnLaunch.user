@@ -5,6 +5,10 @@
       {
         "Path": "Auth-microservice\\Auth-microservice.csproj",
         "Action": "Start"
+      },
+      {
+        "Path": "API_Gateway-microservice\\API_Gateway-microservice.csproj",
+        "Action": "Start"
       }
     ]
   }

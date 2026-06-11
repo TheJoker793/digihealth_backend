@@ -2,10 +2,12 @@
 {
     public enum Role
     {
-        Medecin=1 ,
-        Secretaire=2, 
-        Infirmier=3 ,
-        Patient=4 , 
-        Admin=0
+        // 0 réservé = non défini, jamais assigné
+        Unknown = 0,
+        Admin = 1,
+        Medecin = 2,
+        Secretaire = 3,
+        Infirmier = 4,
+        Patient = 5
     }
 }

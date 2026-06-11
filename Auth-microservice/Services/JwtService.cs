@@ -1,4 +1,5 @@
 ﻿using Auth_microservice.Domain.Entities;
+using Auth_microservice.Domain.Enums;
 using Auth_microservice.Domain.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -30,24 +31,22 @@ namespace Auth_microservice.Services
         // =========================
         public string GenerateAccessToken(User user)
         {
-            var securityKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_key)
-            );
+            if (user.Role == Role.Unknown || !Enum.IsDefined(typeof(Role), user.Role))
+                throw new InvalidOperationException(
+                    $"Rôle invalide pour l'utilisateur {user.Id} : '{user.Role}'"
+                );
 
-            var credentials = new SigningCredentials(
-                securityKey,
-                SecurityAlgorithms.HmacSha256
-            );
-
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var jti = Guid.NewGuid().ToString();
 
             var claims = new List<Claim>
-            {
-                new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new(JwtRegisteredClaimNames.UniqueName, user.Login),
-                new(JwtRegisteredClaimNames.Jti, jti),
-                new(ClaimTypes.Role, user.Role.ToString())
-            };
+    {
+        new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+        new(JwtRegisteredClaimNames.UniqueName, user.Login),
+        new(JwtRegisteredClaimNames.Jti, jti),
+        new("role", user.Role.ToString()) // "Admin", "Medecin", etc.
+    };
 
             var token = new JwtSecurityToken(
                 issuer: _issuer,

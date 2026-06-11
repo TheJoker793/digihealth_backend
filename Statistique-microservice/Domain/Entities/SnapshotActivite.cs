@@ -1,4 +1,6 @@
-﻿namespace Statistique_microservice.Domain.Entities
+﻿using Statistique_microservice.Domain.Events;
+
+namespace Statistique_microservice.Domain.Entities
 {
     /// <summary>
     /// Photo quotidienne de l'activité d'un cabinet.

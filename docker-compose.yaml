@@ -1,5 +1,9 @@
 ﻿services:
 
+  # ══════════════════════════════════════════════
+  # INFRASTRUCTURE
+  # ══════════════════════════════════════════════
+
   cim11-api:
     image: whoicd/icd-api
     container_name: cim11-api
@@ -31,6 +35,10 @@
       timeout: 5s
       retries: 5
       start_period: 20s
+
+  # ══════════════════════════════════════════════
+  # MICROSERVICES
+  # ══════════════════════════════════════════════
 
   auth-service:
     build:
@@ -72,8 +80,6 @@
     depends_on:
       rabbitmq:
         condition: service_healthy
-      cim11-api:
-        condition: service_started
     environment:
       ASPNETCORE_URLS: http://+:80
       ASPNETCORE_ENVIRONMENT: Development
@@ -81,9 +87,6 @@
       RabbitMQ__Port: 5672
       RabbitMQ__Username: guest
       RabbitMQ__Password: guest
-      CIM11__BaseUrl: http://cim11-api:80
-      CIM11__ApiVersion: v2
-      CIM11__Language: en
       ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=digihealth_patient;User ID=sa;Password=DigiHealth2024!;Encrypt=True;TrustServerCertificate=True;"
 
   rendezvous-service:
@@ -99,8 +102,6 @@
     depends_on:
       rabbitmq:
         condition: service_healthy
-      cim11-api:
-        condition: service_started
     environment:
       ASPNETCORE_URLS: http://+:80
       ASPNETCORE_ENVIRONMENT: Development
@@ -108,9 +109,6 @@
       RabbitMQ__Port: 5672
       RabbitMQ__Username: guest
       RabbitMQ__Password: guest
-      CIM11__BaseUrl: http://cim11-api:80
-      CIM11__ApiVersion: v2
-      CIM11__Language: en
       ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=digihealth_rv;User ID=sa;Password=DigiHealth2024!;Encrypt=True;TrustServerCertificate=True;"
 
   dossier-medical-service:
@@ -126,8 +124,6 @@
     depends_on:
       rabbitmq:
         condition: service_healthy
-      cim11-api:
-        condition: service_started
     environment:
       ASPNETCORE_URLS: http://+:80
       ASPNETCORE_ENVIRONMENT: Development
@@ -135,9 +131,6 @@
       RabbitMQ__Port: 5672
       RabbitMQ__Username: guest
       RabbitMQ__Password: guest
-      CIM11__BaseUrl: http://cim11-api:80
-      CIM11__ApiVersion: v2
-      CIM11__Language: en
       ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=digihealth_dossierMedical;User ID=sa;Password=DigiHealth2024!;Encrypt=True;TrustServerCertificate=True;"
 
   prescription-service:
@@ -153,8 +146,6 @@
     depends_on:
       rabbitmq:
         condition: service_healthy
-      cim11-api:
-        condition: service_started
     environment:
       ASPNETCORE_URLS: http://+:80
       ASPNETCORE_ENVIRONMENT: Development
@@ -162,9 +153,6 @@
       RabbitMQ__Port: 5672
       RabbitMQ__Username: guest
       RabbitMQ__Password: guest
-      CIM11__BaseUrl: http://cim11-api:80
-      CIM11__ApiVersion: v2
-      CIM11__Language: en
       ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=digihealth_prescription;User ID=sa;Password=DigiHealth2024!;Encrypt=True;TrustServerCertificate=True;"
 
   facturation-service:
@@ -180,8 +168,6 @@
     depends_on:
       rabbitmq:
         condition: service_healthy
-      cim11-api:
-        condition: service_started
     environment:
       ASPNETCORE_URLS: http://+:80
       ASPNETCORE_ENVIRONMENT: Development
@@ -189,38 +175,90 @@
       RabbitMQ__Port: 5672
       RabbitMQ__Username: guest
       RabbitMQ__Password: guest
-      CIM11__BaseUrl: http://cim11-api:80
-      CIM11__ApiVersion: v2
-      CIM11__Language: en
       ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=digihealth_facturation;User ID=sa;Password=DigiHealth2024!;Encrypt=True;TrustServerCertificate=True;"
 
-  api-gateway:
+  document-service:
     build:
-      context: ./API_Gateway-microservice
+      context: ./Document-microservice
       dockerfile: Dockerfile
-    container_name: digihealth-gateway
+    container_name: digihealth-document
     ports:
-      - "5140:80"
+      - "5105:80"
     networks:
       - digihealth-net
     restart: always
     depends_on:
-      auth-service:
-        condition: service_started
-      patient-service:
-        condition: service_started
-      rendezvous-service:
-        condition: service_started
-      dossier-medical-service:
-        condition: service_started
-      prescription-service:
-        condition: service_started
-      facturation-service:
-        condition: service_started
-      cim11-api:
-        condition: service_started
       rabbitmq:
-        condition: service_started
+        condition: service_healthy
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Development
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: guest
+      RabbitMQ__Password: guest
+      ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=digihealth_document;User ID=sa;Password=DigiHealth2024!;Encrypt=True;TrustServerCertificate=True;"
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: Notification-microservice/Dockerfile
+    container_name: digihealth-notification
+    ports:
+      - "5106:80"
+    networks:
+      - digihealth-net
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Development
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: guest
+      RabbitMQ__Password: guest
+      ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=digihealth_notification;User ID=sa;Password=DigiHealth2024!;Encrypt=True;TrustServerCertificate=True;"
+
+  statistique-service:
+    build:
+      context: .
+      dockerfile: Statistique-microservice/Dockerfile
+    container_name: digihealth-statistique
+    ports:
+      - "5107:80"
+    networks:
+      - digihealth-net
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Development
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: guest
+      RabbitMQ__Password: guest
+      ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=digihealth_statistique;User ID=sa;Password=DigiHealth2024!;Encrypt=True;TrustServerCertificate=True;"
+
+  # ══════════════════════════════════════════════
+  # API GATEWAY
+  # ══════════════════════════════════════════════
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: API_Gateway-microservice/Dockerfile
+    container_name: digihealth-gateway
+    ports:
+      - "5140:80"
+    volumes:
+      - ./API_Gateway-microservice/Ocelot.json:/app/Ocelot.json:ro
+    networks:
+      - digihealth-net
+    restart: always
     environment:
       ASPNETCORE_URLS: http://+:80
       ASPNETCORE_ENVIRONMENT: Development

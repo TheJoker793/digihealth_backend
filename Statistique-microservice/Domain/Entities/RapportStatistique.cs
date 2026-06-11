@@ -1,4 +1,5 @@
 ﻿using Statistique_microservice.Domain.Enums;
+using Statistique_microservice.Domain.Events;
 using Statistique_microservice.Domain.Exceptions;
 using Statistique_microservice.Domain.ValueObjects;
 

@@ -1,4 +1,5 @@
 ﻿using Notification_microservice.Domain.Enums;
+using static Notification_microservice.Domain.Exceptions.NotificationExceptions;
 
 namespace Notification_microservice.Domain.Entities
 {

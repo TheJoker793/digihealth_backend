@@ -62,11 +62,13 @@ namespace Auth_microservice.Services
         // =========================
         public async Task ChangeRoleAsync(Guid userId, Role newRole)
         {
+            if (newRole == Role.Unknown)
+                throw new ArgumentException("Rôle invalide");
+
             var user = await _uow.Users.GetByIdAsync(userId)
                 ?? throw new NotFoundException("User not found");
 
-            ///user.ChangeRole(newRole);
-
+            user.ChangeRole(newRole);  // ← décommenter
             await _uow.SaveChangesAsync();
         }
 

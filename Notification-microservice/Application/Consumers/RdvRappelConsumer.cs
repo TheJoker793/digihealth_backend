@@ -53,5 +53,10 @@ namespace Notification_microservice.Application.Consumers
                     context.CancellationToken);
             }
         }
+
+        public Task Consume(ConsumeContext<RdvRappelEvent> context)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
