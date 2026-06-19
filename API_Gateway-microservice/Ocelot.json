@@ -129,24 +129,10 @@
     },
 
     // ============================================================
-    // USERS
+    // USERS  (statiques en premier, dynamiques ensuite)
     // ============================================================
     {
-      "UpstreamPathTemplate": "/gateway/users",
-      "UpstreamHttpMethod": [ "GET" ],
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "auth-service",
-          "Port": 80
-        }
-      ],
-      "DownstreamPathTemplate": "/api/v1/user",
-      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
-      "RouteClaimsRequirement": { "role": "Admin" }
-    },
-    {
-      "UpstreamPathTemplate": "/gateway/users",
+      "UpstreamPathTemplate": "/gateway/users/create",
       "UpstreamHttpMethod": [ "POST" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -156,20 +142,6 @@
         }
       ],
       "DownstreamPathTemplate": "/api/v1/user/create",
-      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
-      "RouteClaimsRequirement": { "role": "Admin" }
-    },
-    {
-      "UpstreamPathTemplate": "/gateway/users/{id}",
-      "UpstreamHttpMethod": [ "GET" ],
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "auth-service",
-          "Port": 80
-        }
-      ],
-      "DownstreamPathTemplate": "/api/v1/user/{id}",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
       "RouteClaimsRequirement": { "role": "Admin" }
     },
@@ -215,12 +187,8 @@
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
       "RouteClaimsRequirement": { "role": "Admin" }
     },
-
-    // ============================================================
-    // CABINETS
-    // ============================================================
     {
-      "UpstreamPathTemplate": "/gateway/cabinets",
+      "UpstreamPathTemplate": "/gateway/users/{id}",
       "UpstreamHttpMethod": [ "GET" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -229,13 +197,13 @@
           "Port": 80
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/cabinets",
+      "DownstreamPathTemplate": "/api/v1/user/{id}",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
       "RouteClaimsRequirement": { "role": "Admin" }
     },
     {
-      "UpstreamPathTemplate": "/gateway/cabinets",
-      "UpstreamHttpMethod": [ "POST" ],
+      "UpstreamPathTemplate": "/gateway/users",
+      "UpstreamHttpMethod": [ "GET" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -243,10 +211,14 @@
           "Port": 80
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/cabinets",
+      "DownstreamPathTemplate": "/api/v1/user",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
       "RouteClaimsRequirement": { "role": "Admin" }
     },
+
+    // ============================================================
+    // CABINETS  (statiques en premier, dynamiques ensuite)
+    // ============================================================
     {
       "UpstreamPathTemplate": "/gateway/cabinets/active",
       "UpstreamHttpMethod": [ "GET" ],
@@ -303,38 +275,38 @@
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
       "RouteClaimsRequirement": { "role": "Admin" }
     },
-
-    // ============================================================
-    // PATIENTS
-    // ============================================================
     {
-      "UpstreamPathTemplate": "/gateway/patients",
+      "UpstreamPathTemplate": "/gateway/cabinets",
       "UpstreamHttpMethod": [ "GET" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "patient-service",
+          "Host": "auth-service",
           "Port": 80
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/patient",
+      "DownstreamPathTemplate": "/api/v1/cabinets",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
-      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+      "RouteClaimsRequirement": { "role": "Admin" }
     },
     {
-      "UpstreamPathTemplate": "/gateway/patients",
+      "UpstreamPathTemplate": "/gateway/cabinets",
       "UpstreamHttpMethod": [ "POST" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "patient-service",
+          "Host": "auth-service",
           "Port": 80
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/patient",
+      "DownstreamPathTemplate": "/api/v1/cabinets",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
-      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+      "RouteClaimsRequirement": { "role": "Admin" }
     },
+
+    // ============================================================
+    // PATIENTS
+    // ============================================================
     {
       "UpstreamPathTemplate": "/gateway/patients/recherche",
       "UpstreamHttpMethod": [ "GET" ],
@@ -346,6 +318,34 @@
         }
       ],
       "DownstreamPathTemplate": "/api/v1/patient/recherche",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/{id}/antecedents",
+      "UpstreamHttpMethod": [ "GET", "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/patient/{id}/antecedents",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/{id}/couverture",
+      "UpstreamHttpMethod": [ "GET", "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/patient/{id}/couverture",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
       "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
     },
@@ -378,79 +378,271 @@
       "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
     },
     {
-      "UpstreamPathTemplate": "/gateway/patients/{id}/antecedents",
-      "UpstreamHttpMethod": [ "GET", "POST" ],
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "patient-service",
-          "Port": 80
-        }
-      ],
-      "DownstreamPathTemplate": "/api/v1/patient/{id}/antecedents",
-      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
-      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
-    },
-    {
-      "UpstreamPathTemplate": "/gateway/patients/{id}/couverture",
-      "UpstreamHttpMethod": [ "GET", "PUT" ],
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "patient-service",
-          "Port": 80
-        }
-      ],
-      "DownstreamPathTemplate": "/api/v1/patient/{id}/couverture",
-      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
-      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
-    },
-
-    // ============================================================
-    // RENDEZ-VOUS
-    // ============================================================
-    {
-      "UpstreamPathTemplate": "/gateway/rendezvous",
+      "UpstreamPathTemplate": "/gateway/patients",
       "UpstreamHttpMethod": [ "GET" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "rendezvous-service",
+          "Host": "patient-service",
           "Port": 80
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/rendezvous",
+      "DownstreamPathTemplate": "/api/v1/patient",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
       "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
     },
     {
-      "UpstreamPathTemplate": "/gateway/rendezvous",
+      "UpstreamPathTemplate": "/gateway/patients",
       "UpstreamHttpMethod": [ "POST" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "rendezvous-service",
+          "Host": "patient-service",
           "Port": 80
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/rendezvous",
+      "DownstreamPathTemplate": "/api/v1/patient",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
-      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Patient,Admin" }
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
     },
+
     {
-      "UpstreamPathTemplate": "/gateway/rendezvous/{id}",
+      "UpstreamPathTemplate": "/gateway/patients/{patientId}/pieces-identite",
       "UpstreamHttpMethod": [ "GET" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "rendezvous-service",
+          "Host": "patient-service",
           "Port": 80
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/rendezvous/{id}",
+      "DownstreamPathTemplate": "/api/v1/PieceIdentite/{patientId}",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
-      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Infirmier,Patient,Admin" }
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Infirmier,Admin" }
     },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/pieces-identite",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/PieceIdentite",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+
+
+    {
+      "UpstreamPathTemplate": "/gateway/patients/{patientId}/contacts-urgence",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/ContactUrgence/{patientId}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Infirmier,Admin" }
+    },
+
+
+    {
+      "UpstreamPathTemplate": "/gateway/patients/contacts-urgence",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/ContactUrgence",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+
+    {
+      "UpstreamPathTemplate": "/gateway/patients/{patientId}/couverture-sociale",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/CouvertureSociale/{patientId}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Infirmier,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/couverture-sociale",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/CouvertureSociale",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/couverture-sociale/{id}",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/CouvertureSociale/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+
+    {
+      "UpstreamPathTemplate": "/gateway/patients/{patientId}/assurances",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Assurance/{patientId}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Infirmier,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/assurances",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Assurance",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/assurances/{id}",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Assurance/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+
+    {
+      "UpstreamPathTemplate": "/gateway/patients/{patientId}/antecedents",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Antecedent/{patientId}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Infirmier,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/antecedents",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Antecedent",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/antecedents/{id}",
+      "UpstreamHttpMethod": [ "PUT" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Antecedent/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/antecedents/{id}",
+      "UpstreamHttpMethod": [ "DELETE" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Antecedent/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+
+    {
+      "UpstreamPathTemplate": "/gateway/patients/doublons/detect",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Doublon/detect",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/patients/doublons/merge",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "patient-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/Doublon/merge",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Admin" }
+    },
+
+
+    // ============================================================
+    // RENDEZ-VOUS
+    // ============================================================
     {
       "UpstreamPathTemplate": "/gateway/rendezvous/{id}/confirmer",
       "UpstreamHttpMethod": [ "PUT" ],
@@ -476,6 +668,48 @@
         }
       ],
       "DownstreamPathTemplate": "/api/v1/rendezvous/{id}/annuler",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Patient,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/rendezvous/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "rendezvous-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/rendezvous/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Infirmier,Patient,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/rendezvous",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "rendezvous-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/rendezvous",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/rendezvous",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "rendezvous-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/rendezvous",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
       "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Patient,Admin" }
     },
@@ -526,8 +760,8 @@
       "RouteClaimsRequirement": { "role": "Medecin,Admin" }
     },
     {
-      "UpstreamPathTemplate": "/gateway/consultations",
-      "UpstreamHttpMethod": [ "POST" ],
+      "UpstreamPathTemplate": "/gateway/consultations/{id}/cloturer",
+      "UpstreamHttpMethod": [ "PUT" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -535,7 +769,7 @@
           "Port": 80
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/consultation",
+      "DownstreamPathTemplate": "/api/v1/consultation/{id}/cloturer",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
       "RouteClaimsRequirement": { "role": "Medecin,Admin" }
     },
@@ -554,8 +788,8 @@
       "RouteClaimsRequirement": { "role": "Medecin,Admin" }
     },
     {
-      "UpstreamPathTemplate": "/gateway/consultations/{id}/cloturer",
-      "UpstreamHttpMethod": [ "PUT" ],
+      "UpstreamPathTemplate": "/gateway/consultations",
+      "UpstreamHttpMethod": [ "POST" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
@@ -563,7 +797,7 @@
           "Port": 80
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/consultation/{id}/cloturer",
+      "DownstreamPathTemplate": "/api/v1/consultation",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
       "RouteClaimsRequirement": { "role": "Medecin,Admin" }
     },
@@ -586,21 +820,7 @@
     // PRESCRIPTIONS
     // ============================================================
     {
-      "UpstreamPathTemplate": "/gateway/prescriptions",
-      "UpstreamHttpMethod": [ "POST" ],
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "prescription-service",
-          "Port": 80
-        }
-      ],
-      "DownstreamPathTemplate": "/api/v1/prescription",
-      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
-      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
-    },
-    {
-      "UpstreamPathTemplate": "/gateway/prescriptions/{id}",
+      "UpstreamPathTemplate": "/gateway/prescriptions/patient/{patientId}",
       "UpstreamHttpMethod": [ "GET" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -609,7 +829,7 @@
           "Port": 80
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/prescription/{id}",
+      "DownstreamPathTemplate": "/api/v1/prescription/patient/{patientId}",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
       "RouteClaimsRequirement": { "role": "Medecin,Infirmier,Admin" }
     },
@@ -628,7 +848,7 @@
       "RouteClaimsRequirement": { "role": "Medecin,Admin" }
     },
     {
-      "UpstreamPathTemplate": "/gateway/prescriptions/patient/{patientId}",
+      "UpstreamPathTemplate": "/gateway/prescriptions/{id}",
       "UpstreamHttpMethod": [ "GET" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
@@ -637,9 +857,23 @@
           "Port": 80
         }
       ],
-      "DownstreamPathTemplate": "/api/v1/prescription/patient/{patientId}",
+      "DownstreamPathTemplate": "/api/v1/prescription/{id}",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
       "RouteClaimsRequirement": { "role": "Medecin,Infirmier,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/prescriptions",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "prescription-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/prescription",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Admin" }
     },
     {
       "UpstreamPathTemplate": "/gateway/interactions/verifier",
@@ -774,20 +1008,6 @@
     // FACTURATION
     // ============================================================
     {
-      "UpstreamPathTemplate": "/gateway/factures",
-      "UpstreamHttpMethod": [ "POST" ],
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "facturation-service",
-          "Port": 80
-        }
-      ],
-      "DownstreamPathTemplate": "/api/v1/facture",
-      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
-      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
-    },
-    {
       "UpstreamPathTemplate": "/gateway/factures/patient/{patientId}",
       "UpstreamHttpMethod": [ "GET" ],
       "DownstreamScheme": "http",
@@ -854,6 +1074,20 @@
         }
       ],
       "DownstreamPathTemplate": "/api/v1/facture/{id}",
+      "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
+      "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/factures",
+      "UpstreamHttpMethod": [ "POST" ],
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "facturation-service",
+          "Port": 80
+        }
+      ],
+      "DownstreamPathTemplate": "/api/v1/facture",
       "AuthenticationOptions": { "AuthenticationProviderKey": "Bearer" },
       "RouteClaimsRequirement": { "role": "Medecin,Secretaire,Admin" }
     },
