@@ -63,20 +63,16 @@ var app = builder.Build();
 
 // ✅ Middlewares
 app.UseExceptionHandling();
-app.UseJwtValidation();
-
+app.UseHttpsRedirection();
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "Dossier Médical API v1");
-    options.RoutePrefix = "swagger"; // accessible via /swagger
+    options.RoutePrefix = "swagger";
 });
-
-app.UseHttpsRedirection();
 app.UseRouting();
+app.UseAuthentication();  // ✅ AJOUTER
 app.UseAuthorization();
-
-// ✅ Endpoints
+app.UseJwtValidation();
 app.MapControllers();
-
 app.Run();

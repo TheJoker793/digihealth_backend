@@ -1,6 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 
 namespace Dossier_Medical_microservice.Middlewares
@@ -9,18 +10,18 @@ namespace Dossier_Medical_microservice.Middlewares
     {
         private readonly RequestDelegate _next;
         private readonly IConfiguration _config;
-        private readonly IHttpClientFactory _httpClientFactory;
 
-        public JwtValidationMiddleware(RequestDelegate next, IConfiguration config, IHttpClientFactory httpClientFactory)
+        public JwtValidationMiddleware(RequestDelegate next, IConfiguration config)
         {
             _next = next;
             _config = config;
-            _httpClientFactory = httpClientFactory;
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
-            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var token = context.Request.Headers["Authorization"]
+                .FirstOrDefault()?.Split(" ").Last();
+
             if (string.IsNullOrEmpty(token))
             {
                 await _next(context);
@@ -29,11 +30,9 @@ namespace Dossier_Medical_microservice.Middlewares
 
             try
             {
-                var client = _httpClientFactory.CreateClient();
-                var jwksUrl = _config["Auth:JWKS"];
-                var jwksJson = await client.GetStringAsync(jwksUrl);
+                var key = _config["Auth:Key"]
+                    ?? throw new InvalidOperationException("Auth:Key manquant");
 
-                var keys = new JsonWebKeySet(jwksJson);
                 var handler = new JwtSecurityTokenHandler();
                 handler.ValidateToken(token, new TokenValidationParameters
                 {
@@ -42,19 +41,34 @@ namespace Dossier_Medical_microservice.Middlewares
                     ValidateAudience = true,
                     ValidAudience = _config["Auth:Audience"],
                     ValidateLifetime = true,
-                    IssuerSigningKeys = keys.Keys
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(key)),
+                    ClockSkew = TimeSpan.Zero
                 }, out _);
 
                 await _next(context);
             }
-            catch (Exception ex)
+            catch (SecurityTokenException ex)
             {
-                context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(JsonSerializer.Serialize(new
                 {
                     title = "Unauthorized",
                     detail = ex.Message,
-                    status = context.Response.StatusCode
+                    status = 401
+                }));
+            }
+            catch (Exception ex)
+            {
+                context.Response.StatusCode = 500;
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsync(JsonSerializer.Serialize(new
+                {
+                    title = "Internal Server Error",
+                    detail = ex.Message,
+                    status = 500
                 }));
             }
         }

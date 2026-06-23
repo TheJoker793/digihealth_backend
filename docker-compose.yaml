@@ -36,6 +36,15 @@
       retries: 5
       start_period: 20s
 
+  redis:
+    image: redis:alpine
+    container_name: digihealth-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - digihealth-net
+    restart: unless-stopped
+
   # ══════════════════════════════════════════════
   # MICROSERVICES
   # ══════════════════════════════════════════════
@@ -124,14 +133,21 @@
     depends_on:
       rabbitmq:
         condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       ASPNETCORE_URLS: http://+:80
       ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DossierDatabase: "Server=host.docker.internal,1433;Database=digihealth_dossier;User ID=sa;Password=DigiHealth2024!;Encrypt=True;TrustServerCertificate=True;"
+      Auth__Key: "SUPER_SECRET_DEVELOPMENT_KEY_CHANGE_IT"
+      Auth__Issuer: "DMI.Auth"
+      Auth__Audience: "DMI.Client"
       RabbitMQ__Host: rabbitmq
       RabbitMQ__Port: 5672
-      RabbitMQ__Username: guest
+      RabbitMQ__UserName: guest
       RabbitMQ__Password: guest
-      ConnectionStrings__DefaultConnection: "Server=host.docker.internal,1433;Database=digihealth_dossierMedical;User ID=sa;Password=DigiHealth2024!;Encrypt=True;TrustServerCertificate=True;"
+      Redis__Host: redis
+      Redis__Port: 6379
 
   prescription-service:
     build:

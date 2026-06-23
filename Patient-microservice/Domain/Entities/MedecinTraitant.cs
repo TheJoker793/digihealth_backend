@@ -1,6 +1,6 @@
 ﻿namespace Patient_microservice.Domain.Entities
 {
-    public class MedecinTraitant
+    public class MedecinTraitant:BaseEntity
     {
         public string Nom { get; set; }
         public string Prenom { get; set; }

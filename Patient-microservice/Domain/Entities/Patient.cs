@@ -16,6 +16,8 @@ namespace Patient_microservice.Domain.Entities
         public required StatutPatient StatutPatient { get; set; }
         public required string Telephone { get; set; }
         public string? Email { get; set; }
+        public Guid? MedecinTraitantId { get; set; }
+
 
         public MedecinTraitant? MedecinTraitant { get; set; }
 

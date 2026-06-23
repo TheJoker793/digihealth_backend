@@ -72,6 +72,8 @@ var app = builder.Build();
 
 app.UseCors("AllowAll");
 app.UseForwardedHeaders();
+app.UseAuthentication();
+app.UseAuthorization();
 await app.UseOcelot();
 
 app.Run();
